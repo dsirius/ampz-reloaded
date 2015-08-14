@@ -1,0 +1,121 @@
+// ------------------
+// START >> INIT
+// ------------------
+
+defaultTasks "voltzclient", "voltzserver"
+
+minecraft_version = "1.6.4"
+forge_version = "9.11.1.964"
+group = "modpack"
+archivesBaseName = "Ampz-reloaded"
+packVersionMajor = "3"
+packVersionMinor = "0"
+packNonJenkinsBuild = "0"
+
+// Set build number to default if evnrionment variable does not exist.
+if (System.getenv("BUILD_NUMBER") != null) {
+	pack_version = packVersionMajor + "." + packVersionMinor + "." + "${System.getenv("BUILD_NUMBER")}"
+}
+else {
+	pack_version = packVersionMajor + "." + packVersionMinor + "." + packNonJenkinsBuild
+}
+
+wrapper {
+    version = "1.8"
+}
+
+// ------------------
+// START >> VOLTZ CLIENT
+// ------------------
+
+task("voltzclient", type: Zip) {
+    group = 'modpack'
+    description = 'Builds a Voltz client modpack zip'
+
+    // Grab all the files that make up a client installation.
+    from('.')
+	{
+        include 'bin/**'
+        include 'config/**'
+        include 'coremods/**'
+		include 'resourcepacks/**'
+		include 'texturepacks/**'
+		include 'libraries/**'
+        include 'mods/**'
+    }
+	
+	// Copy over default server for multiplayer menu.
+    from('./clientextra')
+	{
+        include '**/*.dat'
+	}
+
+    // Copy over client only mods into mods folder.
+    into('mods'){ from fileTree('clientmods') }
+	
+	// Copy over client only configuration into config folder to temporary build directory.
+	into('config'){ from fileTree('clientconfig') }
+	
+	// Replace the CustomBranding config with our version information.
+	String contents = new File( 'clientbranding/CustomBranding.cfg' ).getText( 'UTF-8' )
+	contents = contents.replaceAll( '@VERSION@', pack_version )
+	
+	// Create the new file that will take its place.
+	new File( 'config/CustomBranding.cfg' ).write(contents, 'UTF-8' )
+	
+	// Do not get empty directories from which no files are included.
+    includeEmptyDirs = false
+
+    // info output.
+    eachFile { file -> logger.lifecycle "packing $file" }
+
+    // Create base filename for our creation.
+    baseName = "./output/$archivesBaseName-$pack_version-client"
+
+    // Logging is always important.
+	doLast { logger.lifecycle "Ampz-Reloaded Client Created: $archivePath" }
+}
+
+// ------------------
+// START >> VOLTZ SERVER
+// ------------------
+
+task("voltzserver", type: Zip)
+{
+    group = 'modpack'
+    description = 'Builds a Voltz server modpack zip'
+
+    // Grab all the files that makeup a server installation.
+    from('.')
+	{
+        include 'bin/**'
+        include 'config/**'
+        include 'coremods/**'
+        include 'mods/**'
+		include 'libraries/**'
+    }
+	
+	// Copy over server only config.
+	into('config'){ from fileTree('serverconfig') }
+	
+	// Copy over server only mods.
+	into('mods'){ from fileTree('servermods') }
+	
+	// Copy over MC server properties, whitelists, scripts, etc.
+	from('./serverextra')
+	{
+        include '**/**'
+	}
+	
+	// Do not get empty directories from which no files are included.
+    includeEmptyDirs = false
+
+    // Print out each file that we package into the mod pack.
+    eachFile { file -> logger.lifecycle "packing $file" }
+
+    // Create base filename for our creation.
+    baseName = "./output/$archivesBaseName-$pack_version-server"
+
+    // Logging is always important.
+    doLast { logger.lifecycle "Ampz-Reloaded Server Created: $archivePath" }
+}

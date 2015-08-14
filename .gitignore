@@ -1,8 +1,7 @@
-.gradle
+.gradle/
+.settings/
 build/
-
-# Ignore Gradle GUI config
-gradle-app.setting
-
-# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
-!gradle-wrapper.jar
+output/
+serversettings/minecraft_server.1.6.4.jar
+serverextra/minecraft_server.1.6.4.jar
+config/CustomBranding.cfg
